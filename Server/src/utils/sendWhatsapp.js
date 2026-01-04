@@ -58,4 +58,24 @@ We are preparing your fresh items now. Thank you for shopping with us! 🙏`;
   }
 };
 
-module.exports = sendWhatsAppMessage;
+const sendOTPMessage = async (phone, otp) => {
+  const instanceId = process.env.ULTRAMSG_INSTANCE_ID || "instance157767";
+  const token = process.env.ULTRAMSG_TOKEN || "rjye1lzj1wv9cmr0";
+
+  const otpMessage = `Your *Niranthara Stores* verification code is: *${otp}* 🛡️\n\nPlease enter this code on the website to confirm your order.`;
+
+  try {
+    const res = await axios.post(`https://api.ultramsg.com/${instanceId}/messages/chat`, {
+      token: token,
+      to: phone,
+      body: otpMessage
+    });
+    console.log(`✅ OTP sent to ${phone}`);
+    return res.data;
+  } catch (error) {
+    console.error("❌ OTP WhatsApp Error:", error.response?.data || error.message);
+    throw new Error("Failed to send OTP via WhatsApp");
+  }
+};
+
+module.exports = { sendWhatsAppMessage, sendOTPMessage };

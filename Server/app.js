@@ -9,7 +9,6 @@ const compression = require("compression");
 const productsRoutes = require("./src/routes/products");
 const ordersRoutes = require("./src/routes/Order");
 const adminRoutes = require("./src/routes/admin");
-
 const app = express();
 
 // 1. MIDDLEWARE
@@ -37,7 +36,7 @@ app.get('/admin', (req, res) => {
 
 // Main shop page & Catch-all
 app.get('*', (req, res) => {
-  console.log("index.html path",path.join(clientPath, 'index.html'))
+  console.log("index.html path", path.join(clientPath, 'index.html'))
   res.sendFile(path.join(clientPath, 'index.html'));
 });
 

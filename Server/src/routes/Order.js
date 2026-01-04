@@ -2,32 +2,66 @@ const express = require("express");
 const router = express.Router();
 const Product = require("../models/product");
 const Order = require("../models/Order");
-const sendWhatsAppMessage = require("../utils/sendWhatsapp");
+// Import both functions from your updated helper
+const { sendWhatsAppMessage, sendOTPMessage } = require("../utils/sendWhatsapp");
+
+// Temporary in-memory storage for OTPs
+const pendingOTPs = {}; 
 
 // =======================================================
-// CREATE ORDER (COD)
+// 1. SEND OTP ROUTE
 // =======================================================
-router.post("/create", async (req, res) => {
+router.post("/send-otp", async (req, res) => {
   try {
-    const { customerName, phone, address, items } = req.body;
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ success: false, error: "Phone required" });
+
+    // --- YOUR PHONE CLEANING LOGIC ---
+    let cleanPhone = phone.trim().replace(/\D/g, ""); 
+    if (cleanPhone.startsWith("0")) cleanPhone = cleanPhone.substring(1);
+    if (cleanPhone.length === 10) cleanPhone = `91${cleanPhone}`;
+
+    // Generate 4-digit OTP
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    
+    // Store OTP against the cleaned phone number
+    pendingOTPs[cleanPhone] = otp;
+
+    // Send via WhatsApp helper
+    await sendOTPMessage(cleanPhone, otp);
+
+    console.log(`DEBUG: OTP ${otp} sent to ${cleanPhone}`); // For terminal testing
+    return res.json({ success: true, message: "OTP Sent successfully" });
+
+  } catch (err) {
+    console.error("Send OTP Error:", err);
+    return res.status(500).json({ success: false, error: "Failed to send OTP" });
+  }
+});
+
+// =======================================================
+// 2. VERIFY OTP & CREATE ORDER (Updated Logic)
+// =======================================================
+router.post("/verify-and-create", async (req, res) => {
+  try {
+    const { customerName, phone, address, items, otp } = req.body;
 
     // 1. Basic Validation
-    if (!customerName || !phone || !address || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ success: false, error: "Missing required fields or cart is empty" });
+    if (!customerName || !phone || !address || !Array.isArray(items) || items.length === 0 || !otp) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
     }
 
-    // 2. CLEAN PHONE NUMBER (+91, 0, or 10-digit handling)
-    let cleanPhone = phone.trim().replace(/\D/g, ""); // Removes +, spaces, dashes
+    // 2. CLEAN PHONE NUMBER (to match stored OTP key)
+    let cleanPhone = phone.trim().replace(/\D/g, ""); 
+    if (cleanPhone.startsWith("0")) cleanPhone = cleanPhone.substring(1);
+    if (cleanPhone.length === 10) cleanPhone = `91${cleanPhone}`;
 
-    if (cleanPhone.startsWith("0")) {
-      cleanPhone = cleanPhone.substring(1); // Remove leading 0
+    // 3. VERIFY OTP
+    if (!pendingOTPs[cleanPhone] || pendingOTPs[cleanPhone] !== otp) {
+      return res.status(401).json({ success: false, error: "Invalid or expired OTP" });
     }
 
-    if (cleanPhone.length === 10) {
-      cleanPhone = `91${cleanPhone}`; // Add 91 if it's just a 10-digit number
-    }
-
-    // 3. Fetch product details from DB
+    // 4. Fetch product details from DB
     const productIds = items.map((i) => i.productId);
     const products = await Product.find({ _id: { $in: productIds } }).lean();
 
@@ -38,36 +72,31 @@ router.post("/create", async (req, res) => {
     let finalItems = [];
     let totalAmount = 0;
 
-    // 4. Calculate Total and Build Final Item List
+    // 5. Calculate Total and Build Final Item List
     items.forEach((cartItem) => {
       const product = products.find((p) => String(p._id) === cartItem.productId);
       if (!product) return;
 
-      const entry = {
+      finalItems.push({
         productId: product._id,
         name: product.name,
         quantity: cartItem.quantity,
         price: product.price
-      };
-
-      finalItems.push(entry);
+      });
       totalAmount += product.price * cartItem.quantity;
     });
 
-    // 5. Create order in Database
+    // 6. Create order in Database
     const newOrder = await Order.create({
       customerName,
-      phone: cleanPhone, // Save the cleaned number
+      phone: cleanPhone,
       address,
       items: finalItems,
       totalAmount,
       paymentStatus: "pending"
     });
 
-    // 6. Notify Admin on WhatsApp (Async)
-    // We don't use 'await' here if we don't want to make the customer wait 
-    // for the WhatsApp API response, but since it's an admin alert, 
-    // it's safer to keep it in a try-catch block.
+    // 7. Notify Admin & Customer on WhatsApp (Async)
     try {
       await sendWhatsAppMessage({
         customerName,
@@ -80,19 +109,21 @@ router.post("/create", async (req, res) => {
       console.error("WhatsApp Alert Failed:", wsErr.message);
     }
 
+    // 8. Success: Clear the used OTP and respond
+    delete pendingOTPs[cleanPhone];
     return res.status(201).json({ 
       success: true, 
       orderId: newOrder._id 
     });
 
   } catch (err) {
-    console.error("Order Create Error:", err);
+    console.error("Order Creation Error:", err);
     return res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 });
 
 // =======================================================
-// GET ALL ORDERS (For Admin Panel)
+// GET ALL ORDERS (Unchanged)
 // =======================================================
 router.get("/all", async (req, res) => {
   try {
@@ -103,17 +134,18 @@ router.get("/all", async (req, res) => {
   }
 });
 
+// =======================================================
+// UPDATE STATUS (Unchanged)
+// =======================================================
 router.patch("/update-status/:id", async (req, res) => {
   try {
-    const { status } = req.body; // e.g., "shipped", "delivered", "cancelled"
+    const { status } = req.body;
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { status },
       { new: true }
     );
-
     if (!order) return res.status(404).json({ success: false, error: "Order not found" });
-
     res.json({ success: true, order });
   } catch (err) {
     res.status(500).json({ success: false, error: "Update failed" });

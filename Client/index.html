@@ -1,12 +1,17 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <title>Niranthara Stores</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       font-family: 'Manrope', sans-serif;
@@ -16,7 +21,9 @@
       transition: padding-right 0.3s ease;
     }
 
-    body.cart-open { padding-right: 360px; }
+    body.cart-open {
+      padding-right: 360px;
+    }
 
     header {
       background: #fff;
@@ -30,7 +37,10 @@
       border-bottom: 1px solid #eee;
     }
 
-    header h1 { font-size: 22px; color: #2e7d32; }
+    header h1 {
+      font-size: 22px;
+      color: #2e7d32;
+    }
 
     .cart-link {
       color: #2e7d32;
@@ -68,9 +78,16 @@
       cursor: pointer;
     }
 
-    .cat-btn.active { background: #2e7d32; color: white; border-color: #2e7d32; }
+    .cat-btn.active {
+      background: #2e7d32;
+      color: white;
+      border-color: #2e7d32;
+    }
 
-    .container { width: 100%; padding: 20px 24px; }
+    .container {
+      width: 100%;
+      padding: 20px 24px;
+    }
 
     #products {
       display: flex;
@@ -82,7 +99,7 @@
       background: #fff;
       border-radius: 12px;
       padding: 12px 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       transition: 0.3s;
     }
 
@@ -90,7 +107,8 @@
     .product-card.unavailable {
       opacity: 0.6;
       filter: grayscale(0.8);
-      pointer-events: none; /* Prevents clicks on the whole card */
+      pointer-events: none;
+      /* Prevents clicks on the whole card */
     }
 
     .product-row {
@@ -114,8 +132,15 @@
       border-radius: 8px;
     }
 
-    .product-info h3 { font-size: 16px; margin-bottom: 2px; }
-    .product-info p { font-size: 13px; color: #666; }
+    .product-info h3 {
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+
+    .product-info p {
+      font-size: 13px;
+      color: #666;
+    }
 
     .product-action {
       display: flex;
@@ -123,7 +148,11 @@
       gap: 20px;
     }
 
-    .price { font-weight: 700; color: #2e7d32; font-size: 16px; }
+    .price {
+      font-weight: 700;
+      color: #2e7d32;
+      font-size: 16px;
+    }
 
     .qty-group {
       display: flex;
@@ -133,7 +162,8 @@
       padding: 4px 8px;
       border-radius: 20px;
       border: 1px solid #c8e6c9;
-      pointer-events: auto; /* Re-enable clicks for active items */
+      pointer-events: auto;
+      /* Re-enable clicks for active items */
     }
 
     .qty-btn {
@@ -177,21 +207,30 @@
       height: 100vh;
       background: #fff;
       z-index: 2000;
-      box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
       transition: right 0.3s ease;
       padding: 24px;
       display: flex;
       flex-direction: column;
     }
 
-    .cart-panel.active { right: 0; }
+    .cart-panel.active {
+      right: 0;
+    }
 
     @media (max-width: 768px) {
-      body.cart-open { padding-right: 0; }
-      .cart-panel { width: 100%; right: -100%; }
+      body.cart-open {
+        padding-right: 0;
+      }
+
+      .cart-panel {
+        width: 100%;
+        right: -100%;
+      }
     }
   </style>
 </head>
+
 <body>
   <header>
     <h1>Niranthara Stores</h1>
@@ -208,7 +247,7 @@
       <button class="cat-btn" onclick="window.filterProducts('Briyani')">Briyani</button>
     </div>
     <input type="text" id="search-input" placeholder="Search..." oninput="window.handleSearch(this.value)"
-           style="padding: 8px; border-radius: 8px; border: 1px solid #ddd; width: 150px;">
+      style="padding: 8px; border-radius: 8px; border: 1px solid #ddd; width: 150px;">
   </div>
 
   <div class="container">
@@ -219,17 +258,42 @@
     <h3>Your Basket</h3>
     <div id="cart-items" style="flex: 1; overflow-y: auto; margin: 20px 0;"></div>
     <p style="font-weight: 700; font-size: 18px; margin-bottom: 15px;">Total: ₹<span id="cart-total">0</span></p>
-    
+
     <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
-      <input type="text" id="input-name" placeholder="Full Name" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-      <input type="text" id="input-mobile" placeholder="Mobile Number" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-      <textarea id="input-address" placeholder="Address" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; height: 60px; resize: none;"></textarea>
+      <input type="text" id="input-name" placeholder="Full Name"
+        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+      <input type="text" id="input-mobile" placeholder="WhatsApp Number"
+        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+      <textarea id="input-address" placeholder="Delivery Address"
+        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; height: 60px; resize: none;"></textarea>
     </div>
 
-    <button onclick="window.placeOrder()" style="width:100%; padding:12px; background:#2e7d32; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Confirm Order</button>
-    <button onclick="window.toggleCart()" style="width:100%; padding:8px; margin-top:8px; background:#f5f5f5; border:none; border-radius:6px; cursor:pointer;">Close</button>
+    <div id="otp-section"
+      style="display:none; margin-bottom: 15px; padding: 15px; background: #e8f5e9; border: 1px dashed #2e7d32; border-radius: 8px;">
+      <p style="font-size: 12px; color: #2e7d32; font-weight: bold; margin-bottom: 8px; text-align: center;">
+        <i class="fab fa-whatsapp"></i> Enter 4-digit OTP sent to WhatsApp
+      </p>
+      <input type="text" id="input-otp" placeholder="0 0 0 0" maxlength="4"
+        style="width: 100%; text-align: center; font-size: 22px; letter-spacing: 10px; padding: 10px; border: 1px solid #2e7d32; border-radius: 6px; font-weight: bold;">
+
+      <button onclick="window.confirmOrderWithOTP()"
+        style="width: 100%; background: #2e7d32; color: white; border: none; padding: 12px; margin-top: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+        Verify & Finalize Order
+      </button>
+      <p style="font-size: 11px; color: #666; text-align: center; margin-top: 8px;">
+        Wrong number? <span onclick="window.location.reload()" style="color: blue; cursor: pointer;">Edit Info</span>
+      </p>
+    </div>
+    <button id="btn-place-order" onclick="window.placeOrder()" class="checkout-btn"
+      style="width:100%; padding:14px; background:#2e7d32; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">
+      Confirm Order
+    </button>
+
+    <button onclick="window.toggleCart()"
+      style="width:100%; padding:8px; margin-top:8px; background:#f5f5f5; border:none; border-radius:6px; cursor:pointer;">Close</button>
   </div>
 
   <script src="./js/app.js"></script>
 </body>
+
 </html>

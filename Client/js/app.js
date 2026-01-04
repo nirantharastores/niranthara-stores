@@ -149,19 +149,79 @@ window.placeOrder = async function () {
     const phone = document.getElementById("input-mobile").value;
     const address = document.getElementById("input-address").value;
 
-    if (!name || !phone || !address || cart.length === 0) return alert("Please complete form and add items.");
+    if (!name || !phone || !address || cart.length === 0) {
+        return alert("Please complete form and add items to basket.");
+    }
+
+    // Update button text to show loading
+    const orderBtn = document.getElementById("btn-place-order");
+    orderBtn.innerText = "Sending OTP...";
+    orderBtn.disabled = true;
 
     try {
-        const res = await fetch(`${API}/orders/create`, {
+        const res = await fetch(`${API}/orders/send-otp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ customerName: name, phone, address, items: cart })
+            body: JSON.stringify({ phone: phone })
         });
-        if ((await res.json()).success) {
-            alert("Order Success!");
-            cart = []; localStorage.removeItem("cart"); window.location.reload();
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            alert("OTP sent to your WhatsApp number!");
+            // Switch UI: Hide Order button, show OTP section
+            document.getElementById("otp-section").style.display = "block";
+            orderBtn.style.display = "none";
+            // Lock the phone field so it matches the OTP
+            document.getElementById("input-mobile").readOnly = true;
+            document.getElementById("input-name").readOnly = true;
+        } else {
+            alert("Failed to send OTP: " + (data.error || "Try again"));
+            orderBtn.innerText = "Confirm Order";
+            orderBtn.disabled = false;
         }
-    } catch (err) { alert("Error placing order."); }
+    } catch (err) {
+        alert("Server Connection Error");
+        orderBtn.innerText = "Confirm Order";
+        orderBtn.disabled = false;
+    }
+};
+
+// STEP 2: VERIFY OTP AND CREATE FINAL ORDER
+window.confirmOrderWithOTP = async function () {
+    const name = document.getElementById("input-name").value;
+    const phone = document.getElementById("input-mobile").value;
+    const address = document.getElementById("input-address").value;
+    const otp = document.getElementById("input-otp").value;
+
+    if (!otp || otp.length < 4) return alert("Please enter the 4-digit OTP.");
+
+    try {
+        const res = await fetch(`${API}/orders/verify-and-create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                customerName: name, 
+                phone: phone, 
+                address: address, 
+                items: cart, 
+                otp: otp 
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            alert("Order Success! Check your WhatsApp for confirmation.");
+            cart = []; 
+            localStorage.removeItem("cart"); 
+            window.location.reload();
+        } else {
+            alert(data.error || "Invalid OTP. Please check and try again.");
+        }
+    } catch (err) {
+        alert("Error verifying order. Please check your connection.");
+    }
 };
 
 loadProducts();
