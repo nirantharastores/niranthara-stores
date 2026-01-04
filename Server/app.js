@@ -37,6 +37,7 @@ app.get('/admin', (req, res) => {
 
 // Main shop page & Catch-all
 app.get('*', (req, res) => {
+  console.log("index.html path",path.join(clientPath, 'index.html'))
   res.sendFile(path.join(clientPath, 'index.html'));
 });
 
