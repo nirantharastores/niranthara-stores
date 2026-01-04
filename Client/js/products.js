@@ -1,6 +1,8 @@
 console.log("📦 products.js loaded");
 
-const API = "http://localhost:4000/api";
+const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:4000/api"
+    : "/api";
 
 // Load products for products.html UI
 async function loadProductsUI() {
