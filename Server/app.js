@@ -3,90 +3,51 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
-const helmet = require("helmet"); // Security headers
-const compression = require("compression"); // Gzip compression
+const helmet = require("helmet");
+const compression = require("compression");
 
-// ROUTES
 const productsRoutes = require("./src/routes/products");
 const ordersRoutes = require("./src/routes/Order");
 const adminRoutes = require("./src/routes/admin");
 
 const app = express();
 
-// 1. GLOBAL MIDDLEWARE
-app.use(helmet({
-  contentSecurityPolicy: false, // Set to false if you're loading external scripts/images
-}));
-app.use(compression()); // Compresses responses for faster loading
-app.use(cors({
-  origin: "*", // In production, replace "*" with your actual domain link
-  methods: ["GET", "POST", "PATCH", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+// 1. MIDDLEWARE
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(compression());
+app.use(cors());
+app.use(express.json());
 
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true }));
+// 2. PATH SETUP (Critical for Render)
+// This points to the 'client' folder sitting outside the 'server' folder
+const clientPath = path.resolve(__dirname, "..", "client");
 
-// ---------------------------------------------------------
-// 2. API ROUTES
-// ---------------------------------------------------------
+// 3. SERVE STATIC FILES
+app.use(express.static(clientPath));
+
+// 4. API ROUTES
 app.use("/api/products", productsRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/admin", adminRoutes);
 
-// ---------------------------------------------------------
-// 3. STATIC FILES & PAGE ROUTES
-// ---------------------------------------------------------
-// Serve all files from the 'client' folder
-app.use(express.static(path.join(__dirname, '../client')));
-
-// Specific route for Admin Login
+// 5. PAGE ROUTES
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/admin-login.html'));
+  res.sendFile(path.join(clientPath, 'admin-login.html'));
 });
 
-// Main shop page (Catch-all for root)
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
-});
-
-// CATCH-ALL ROUTE (Critical for production)
-// This ensures that if a user refreshes a sub-page, it doesn't crash
+// Main shop page & Catch-all
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
+  res.sendFile(path.join(clientPath, 'index.html'));
 });
 
-// ---------------------------------------------------------
-// 4. GLOBAL ERROR HANDLER
-// ---------------------------------------------------------
-app.use((err, req, res, next) => {
-  console.error("❌ SERVER ERROR:", err.stack);
-  res.status(500).json({
-    success: false,
-    error: process.env.NODE_ENV === 'production' ? "Internal server error" : err.message
-  });
-});
+// 6. DATABASE & START
+const PORT = process.env.PORT || 4000; // Render will provide the PORT automatically
 
-// ---------------------------------------------------------
-// 5. DATABASE & SERVER START
-// ---------------------------------------------------------
-const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGODB_URI;
-
-if (!MONGO_URI) {
-  console.error("❌ Error: MONGODB_URI is not defined in environment variables.");
-  process.exit(1);
-}
-
-mongoose.connect(MONGO_URI)
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
-    console.log("✅ MongoDB Connected Successfully");
+    console.log("✅ MongoDB Connected");
     app.listen(PORT, () => {
-      console.log(`🚀 Niranthara Stores Server is Live!`);
-      console.log(`🔗 Port: ${PORT}`);
-      console.log(`🔗 Production Mode: ${process.env.NODE_ENV === 'production'}`);
+      console.log(`🚀 Niranthara Server running on port ${PORT}`);
     });
   })
-  .catch((err) => {
-    console.error("❌ MongoDB connection failed:", err.message);
-  });
+  .catch(err => console.error("❌ DB Error:", err));
