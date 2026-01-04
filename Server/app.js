@@ -20,7 +20,7 @@ app.use(express.json());
 
 // 2. PATH SETUP (Critical for Render)
 // This points to the 'client' folder sitting outside the 'server' folder
-const clientPath = path.resolve(__dirname, "..", "client");
+const clientPath = path.resolve(__dirname, "..", "Client");
 
 // 3. SERVE STATIC FILES
 app.use(express.static(clientPath));
