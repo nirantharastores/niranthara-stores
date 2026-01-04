@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Niranthara Stores</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: #f6f7f9;
+      color: #222;
+      overflow-x: hidden;
+      transition: padding-right 0.3s ease;
+    }
+
+    body.cart-open { padding-right: 360px; }
+
+    header {
+      background: #fff;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1001;
+      border-bottom: 1px solid #eee;
+    }
+
+    header h1 { font-size: 22px; color: #2e7d32; }
+
+    .cart-link {
+      color: #2e7d32;
+      text-decoration: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .nav-sticky {
+      position: sticky;
+      top: 55px;
+      z-index: 1000;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .category-bar {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .cat-btn {
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1px solid #e0e0e0;
+      background: #f8f9fa;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .cat-btn.active { background: #2e7d32; color: white; border-color: #2e7d32; }
+
+    .container { width: 100%; padding: 20px 24px; }
+
+    #products {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .product-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: 0.3s;
+    }
+
+    /* Disabled State Styling */
+    .product-card.unavailable {
+      opacity: 0.6;
+      filter: grayscale(0.8);
+      pointer-events: none; /* Prevents clicks on the whole card */
+    }
+
+    .product-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .product-main {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex: 1;
+    }
+
+    .product-row img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .product-info h3 { font-size: 16px; margin-bottom: 2px; }
+    .product-info p { font-size: 13px; color: #666; }
+
+    .product-action {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .price { font-weight: 700; color: #2e7d32; font-size: 16px; }
+
+    .qty-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f8e9;
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 1px solid #c8e6c9;
+      pointer-events: auto; /* Re-enable clicks for active items */
+    }
+
+    .qty-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: #2e7d32;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .add-btn {
+      padding: 6px 20px;
+      border-radius: 20px;
+      border: 1px solid #2e7d32;
+      background: white;
+      color: #2e7d32;
+      font-weight: 700;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .sold-out-btn {
+      padding: 6px 15px;
+      border-radius: 20px;
+      background: #ececec;
+      color: #888;
+      font-weight: 700;
+      font-size: 13px;
+      border: 1px solid #ddd;
+      cursor: not-allowed;
+    }
+
+    .cart-panel {
+      position: fixed;
+      top: 0;
+      right: -360px;
+      width: 360px;
+      height: 100vh;
+      background: #fff;
+      z-index: 2000;
+      box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+      transition: right 0.3s ease;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cart-panel.active { right: 0; }
+
+    @media (max-width: 768px) {
+      body.cart-open { padding-right: 0; }
+      .cart-panel { width: 100%; right: -100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Niranthara Stores</h1>
+    <a href="#" class="cart-link" onclick="window.toggleCart(); return false;">
+      Cart (<span id="cart-count">0</span>)
+    </a>
+  </header>
+
+  <div class="nav-sticky">
+    <div id="category-bar" class="category-bar">
+      <button class="cat-btn active" onclick="window.filterProducts('all')">All</button>
+      <button class="cat-btn" onclick="window.filterProducts('Batters')">Batters</button>
+      <button class="cat-btn" onclick="window.filterProducts('Breakfast')">Breakfast</button>
+      <button class="cat-btn" onclick="window.filterProducts('Briyani')">Briyani</button>
+    </div>
+    <input type="text" id="search-input" placeholder="Search..." oninput="window.handleSearch(this.value)"
+           style="padding: 8px; border-radius: 8px; border: 1px solid #ddd; width: 150px;">
+  </div>
+
+  <div class="container">
+    <div id="products">Loading products...</div>
+  </div>
+
+  <div id="cart-panel" class="cart-panel">
+    <h3>Your Basket</h3>
+    <div id="cart-items" style="flex: 1; overflow-y: auto; margin: 20px 0;"></div>
+    <p style="font-weight: 700; font-size: 18px; margin-bottom: 15px;">Total: ₹<span id="cart-total">0</span></p>
+    
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+      <input type="text" id="input-name" placeholder="Full Name" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+      <input type="text" id="input-mobile" placeholder="Mobile Number" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+      <textarea id="input-address" placeholder="Address" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; height: 60px; resize: none;"></textarea>
+    </div>
+
+    <button onclick="window.placeOrder()" style="width:100%; padding:12px; background:#2e7d32; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Confirm Order</button>
+    <button onclick="window.toggleCart()" style="width:100%; padding:8px; margin-top:8px; background:#f5f5f5; border:none; border-radius:6px; cursor:pointer;">Close</button>
+  </div>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>

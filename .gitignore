@@ -1,0 +1,11 @@
+# Ignore node_modules in any folder
+node_modules/
+Client/node_modules/
+Server/node_modules/
+
+# Ignore environment variables (Safety for your tokens)
+.env
+
+# Ignore system files
+.DS_Store
+Thumbs.db
